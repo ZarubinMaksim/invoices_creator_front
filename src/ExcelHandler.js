@@ -172,11 +172,11 @@ console.log(tableData)
           Email selected
         </button>
       </div>
-      <div className="max-h-96 overflow-y-auto border-2 border-black">
+      <div className="max-h-screen overflow-y-auto">
         <table className="border border-gray-300 w-full text-sm">
-          <thead>
+          <thead className="sticky top-0 z-10">
             <tr className="bg-gray-100">
-              <th className="border px-2 py-1 text-center">
+              <th className="border px-2 py-1 text-center sticky top-0 z-20">
                 Select{" "}
                 <input
                   type="checkbox"
@@ -184,19 +184,19 @@ console.log(tableData)
                   onChange={handleSelectAll}
                 />
               </th>
-              <th className="border px-2 py-1">№</th>
-              <th className="border px-2 py-1">Room</th>
-              <th className="border px-2 py-1">Name</th>
-              <th className="border px-2 py-1">Email</th>
-              <th className="border px-2 py-1">Phone</th>
-              <th className="border px-2 py-1">Water</th>
-              <th className="border px-2 py-1">Elec</th>
-              <th className="border px-2 py-1">Total</th>
-              <th className="border px-2 py-1">Deposit</th>
-              <th className="border px-2 py-1">Payment</th>
-              <th className="border px-2 py-1">PDF status</th>
-              <th className="border px-2 py-1">Email status</th>
-              <th className="border px-2 py-1">PDF</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">№</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Room</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Name</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Email</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Phone</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Water</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Elec</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Total</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Deposit</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Payment</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">PDF status</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">Email status</th>
+              <th className="border px-2 py-1 sticky top-0 z-20">PDF</th>
             </tr>
           </thead>
           <tbody>
@@ -218,7 +218,7 @@ console.log(tableData)
                 className="text-blue-600 hover:underline"
                 onClick={(e) => e.stopPropagation()}
               >
-                {row.phone}
+                {row.phone.replace(/\s/g, "")}
               </a>
                 )}
 
