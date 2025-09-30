@@ -9,7 +9,7 @@ function App() {
 //получить доступ к паролю почты
 
   return (
-    <div className="p-4 h-screen flex justify-center items-center">
+    <div className="h-screen p-4">
       <UploadFile />
     </div>
   );
