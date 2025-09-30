@@ -172,100 +172,101 @@ console.log(tableData)
           Email selected
         </button>
       </div>
-      
-      <table className="border border-gray-300 w-full text-sm">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border px-2 py-1 text-center">
-              Select{" "}
-              <input
-                type="checkbox"
-                checked={selectAll}
-                onChange={handleSelectAll}
-              />
-            </th>
-            <th className="border px-2 py-1">№</th>
-            <th className="border px-2 py-1">Room</th>
-            <th className="border px-2 py-1">Name</th>
-            <th className="border px-2 py-1">Email</th>
-            <th className="border px-2 py-1">Phone</th>
-            <th className="border px-2 py-1">Water</th>
-            <th className="border px-2 py-1">Elec</th>
-            <th className="border px-2 py-1">Total</th>
-            <th className="border px-2 py-1">Deposit</th>
-            <th className="border px-2 py-1">Payment</th>
-            <th className="border px-2 py-1">PDF status</th>
-            <th className="border px-2 py-1">Email status</th>
-            <th className="border px-2 py-1">PDF</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tableData.map((row, index) => (
-            <tr key={index} onClick={() => handleCheckboxChange(index)} className={`hover:bg-green-200 hover:shadow-lg cursor-pointer ${row.isPaid === 'PAID' || row.deposit > row.amount_total ? 'bg-green-200 opacity-40 hover:opacity-100' : ''}`}>
-              <td className="border px-2 py-1 text-center">
-                <input type="checkbox" checked={selectedRows.includes(index)} />
-              </td>
-              <td className="border px-2 py-1 text-center">{index + 1}</td>
-              <td className="border px-2 py-1">{row.room}</td>
-              <td className="border px-2 py-1">{row.name}</td>
-              <td className="border px-2 py-1">{row.email}</td>
-              <td className="border px-2 py-1">
-              {row.phone === 'no' ? ('No') : (
-              <a
-              href={`https://web.whatsapp.com/send?phone=${row.phone.replace(/\D/g, "")}&text=${encodeURIComponent(handleMessage(row))}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {row.phone}
-            </a>
-              )}
-
-                {row.phone !== 'no' && row.phone ? (
-                  <button
-                  onClick={(e) => {
-                     e.stopPropagation();
-                     navigator.clipboard.writeText(row.phone.replace(/\D/g, ""))
-                  }}
-                  className="p-1 rounded hover:bg-green-300 ml-1 opacity-50 hover:opacity-100"
-                  title="Copy phone"
-                >
-                  <Copy size={16} />
-                </button>
-                ) : (null)}
-
-              </td>
-              <td className="border px-2 py-1 text-right">{row.water_total}</td>
-              <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
-              <td className="border px-2 py-1 text-right">{row.amount_total}</td>
-              <td className={`border px-2 py-1 text-right ${parseFloat(row.deposit) >= parseFloat(row.amount_total) ? 'bg-green-200' : ''}`}>{row.deposit}</td>
-              <td className={`border px-2 py-1 text-right font-bold ${row.isPaid === 'PAID' ? 'bg-green-200' : ''}`}>{row.isPaid}</td>
-              <td className={`border px-2 py-1 text-center font-bold ${row.status === "success" ? "bg-green-200" : "bg-red-100"}`}>
-                {row.status === "success" ? "SUCCESS" : "ERROR"}
-              </td>
-              <td className={`border px-2 py-1 text-center font-bold ${row.emailStatus === "success" ? "bg-green-200" : row.emailStatus === "error" ? "text-red-600" : row.emailStatus === "sending" ? "bg-yellow-100" : "text-gray-400"}`} >
-                {row.emailStatus === "success"
-                ? "Send"
-                : row.emailStatus === "error"
-                ? "Error"
-                : row.emailStatus === "sending"
-                ? "Sending..."
-                : "—"}
-              </td>
-              <td className="border px-2 py-1 text-center">
-                {row.pdfUrl ? (
-                  <a href={`${SERVER_URL}${row.pdfUrl}`} target="_blank" rel="noreferrer" className="text-blue-500 underline" onClick={(e) => e.stopPropagation()}>
-                    Download
-                  </a>
-                ) : (
-                  "-"
-                )}
-              </td>
+      <div className="max-h-96 overflow-y-auto">
+        <table className="border border-gray-300 w-full text-sm">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border px-2 py-1 text-center">
+                Select{" "}
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                />
+              </th>
+              <th className="border px-2 py-1">№</th>
+              <th className="border px-2 py-1">Room</th>
+              <th className="border px-2 py-1">Name</th>
+              <th className="border px-2 py-1">Email</th>
+              <th className="border px-2 py-1">Phone</th>
+              <th className="border px-2 py-1">Water</th>
+              <th className="border px-2 py-1">Elec</th>
+              <th className="border px-2 py-1">Total</th>
+              <th className="border px-2 py-1">Deposit</th>
+              <th className="border px-2 py-1">Payment</th>
+              <th className="border px-2 py-1">PDF status</th>
+              <th className="border px-2 py-1">Email status</th>
+              <th className="border px-2 py-1">PDF</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {tableData.map((row, index) => (
+              <tr key={index} onClick={() => handleCheckboxChange(index)} className={`hover:bg-green-200 hover:shadow-lg cursor-pointer ${row.isPaid === 'PAID' || row.deposit > row.amount_total ? 'bg-green-200 opacity-40 hover:opacity-100' : ''}`}>
+                <td className="border px-2 py-1 text-center">
+                  <input type="checkbox" checked={selectedRows.includes(index)} />
+                </td>
+                <td className="border px-2 py-1 text-center">{index + 1}</td>
+                <td className="border px-2 py-1">{row.room}</td>
+                <td className="border px-2 py-1">{row.name}</td>
+                <td className="border px-2 py-1">{row.email}</td>
+                <td className="border px-2 py-1">
+                {row.phone === 'no' ? ('No') : (
+                <a
+                href={`https://web.whatsapp.com/send?phone=${row.phone.replace(/\D/g, "")}&text=${encodeURIComponent(handleMessage(row))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {row.phone}
+              </a>
+                )}
+
+                  {row.phone !== 'no' && row.phone ? (
+                    <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(row.phone.replace(/\D/g, ""))
+                    }}
+                    className="p-1 rounded hover:bg-green-300 ml-1 opacity-50 hover:opacity-100"
+                    title="Copy phone"
+                  >
+                    <Copy size={16} />
+                  </button>
+                  ) : (null)}
+
+                </td>
+                <td className="border px-2 py-1 text-right">{row.water_total}</td>
+                <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
+                <td className="border px-2 py-1 text-right">{row.amount_total}</td>
+                <td className={`border px-2 py-1 text-right ${parseFloat(row.deposit) >= parseFloat(row.amount_total) ? 'bg-green-200' : ''}`}>{row.deposit}</td>
+                <td className={`border px-2 py-1 text-right font-bold ${row.isPaid === 'PAID' ? 'bg-green-200' : ''}`}>{row.isPaid}</td>
+                <td className={`border px-2 py-1 text-center font-bold ${row.status === "success" ? "bg-green-200" : "bg-red-100"}`}>
+                  {row.status === "success" ? "SUCCESS" : "ERROR"}
+                </td>
+                <td className={`border px-2 py-1 text-center font-bold ${row.emailStatus === "success" ? "bg-green-200" : row.emailStatus === "error" ? "text-red-600" : row.emailStatus === "sending" ? "bg-yellow-100" : "text-gray-400"}`} >
+                  {row.emailStatus === "success"
+                  ? "Send"
+                  : row.emailStatus === "error"
+                  ? "Error"
+                  : row.emailStatus === "sending"
+                  ? "Sending..."
+                  : "—"}
+                </td>
+                <td className="border px-2 py-1 text-center">
+                  {row.pdfUrl ? (
+                    <a href={`${SERVER_URL}${row.pdfUrl}`} target="_blank" rel="noreferrer" className="text-blue-500 underline" onClick={(e) => e.stopPropagation()}>
+                      Download
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
