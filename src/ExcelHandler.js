@@ -172,7 +172,7 @@ console.log(tableData)
           Email selected
         </button>
       </div>
-      <div className="max-h-96 overflow-y-auto">
+      <div className="max-h-96 overflow-y-auto border-2 border-black">
         <table className="border border-gray-300 w-full text-sm">
           <thead>
             <tr className="bg-gray-100">
