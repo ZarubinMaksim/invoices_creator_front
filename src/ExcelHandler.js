@@ -182,9 +182,9 @@ return (
             <table className="w-full text-sm min-w-max">
               <thead className="sticky top-0 z-10 bg-gray-100">
                 <tr>
-                  <th className="border px-1 py-1 text-center w-8">
+                  {/* <th className="border px-1 py-1 text-center w-8">
                     <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4" />
-                  </th>
+                  </th> */}
                   <th className="border px-1 py-1 w-8">Room</th>
                   <th className="border px-1 py-1 w-8">Name</th>
                   <th className="border px-1 py-1 w-8">Email</th>
@@ -255,9 +255,9 @@ return (
             <table className="w-full text-sm min-w-max">
               <thead className="sticky top-0 z-10 bg-gray-100">
                 <tr>
-                  <th className="border px-1 py-1 text-center w-8">
+                  {/* <th className="border px-1 py-1 text-center w-8">
                     <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4" />
-                  </th>
+                  </th> */}
                   <th className="border px-1 py-1 w-8">Room</th>
                   <th className="border px-1 py-1 w-8">Name</th>
                   <th className="border px-1 py-1 w-8">Email</th>
