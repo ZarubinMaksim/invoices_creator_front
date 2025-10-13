@@ -201,7 +201,7 @@ return (
               </thead>
               <tbody>
                 {tableData.filter(row => parseFloat(row.deposit) >= parseFloat(row.amount_total)).map((row, index) => (
-                  <tr key={index} onClick={() => handleCheckboxChange(index)} className="hover:bg-green-200 cursor-pointer bg-green-200 opacity-40 hover:opacity-100">
+                  <tr key={index} onClick={() => handleCheckboxChange(index)} className="hover:bg-green-200 cursor-pointer bg-green-200">
                     <td className="border px-2 py-1 text-center">
                       <input type="checkbox" checked={selectedRows.includes(index)} />
                     </td>
@@ -274,7 +274,7 @@ return (
               </thead>
               <tbody>
                 {tableData.filter(row => row.isPaid === 'PAID' && parseFloat(row.deposit) < parseFloat(row.amount_total)).map((row, index) => (
-                  <tr key={index} onClick={() => handleCheckboxChange(index)} className="hover:bg-green-200 cursor-pointer bg-green-200 opacity-40 hover:opacity-100">
+                  <tr key={index} onClick={() => handleCheckboxChange(index)} className="hover:bg-green-200 cursor-pointer bg-green-200 ">
                     <td className="border px-2 py-1 text-center">
                       <input type="checkbox" checked={selectedRows.includes(index)} />
                     </td>
