@@ -6,11 +6,14 @@ const SERVER_URL = "http://38.244.150.204:4000";
 const ExcelHandler = ({ data }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [tableData, setTableData] = useState(data); // локальная копия с обновляемыми статусами
+  const [tableData, setTableData] = useState(data);
+
+  // Фильтрованные данные для каждой таблицы
+  const withDepositData = tableData.filter(row => parseFloat(row.deposit) >= parseFloat(row.amount_total));
+  const paidData = tableData.filter(row => row.isPaid === 'PAID' && parseFloat(row.deposit) < parseFloat(row.amount_total));
+  const othersData = tableData.filter(row => row.isPaid !== 'PAID' && parseFloat(row.deposit) < parseFloat(row.amount_total));
 
   const handleMessage = (row) => {
-    // --- месяц для текста письма (следующий месяц)
-    console.log(row)
     const dateObjText = new Date(row.date_from.split("/").reverse().join("-"));
     dateObjText.setMonth(dateObjText.getMonth() + 1);
     const monthNameText = dateObjText.toLocaleString("en-US", { month: "long" });
@@ -36,16 +39,31 @@ Sumolthip Kraisuwan
 Assistant of Juristic Person Manager`
   }
 
-  //клие по чекбоку
-  const handleCheckboxChange = (index) => {
+  // Обработчик чекбокса с учетом типа таблицы
+  const handleCheckboxChange = (originalIndex) => {
     setSelectedRows((prev) =>
-      prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : [...prev, index]
+      prev.includes(originalIndex)
+        ? prev.filter((i) => i !== originalIndex)
+        : [...prev, originalIndex]
     );
   };
 
-  //при монтировании компонента не проставлять чекбокс на депозит больше тотал
+  // Выбор всех в таблице "Others"
+  const handleSelectAllOthers = () => {
+    const othersIndexes = othersData.map(row => 
+      tableData.findIndex(item => item === row)
+    );
+    
+    if (selectAll) {
+      // Убираем только индексы из таблицы Others
+      setSelectedRows(prev => prev.filter(index => !othersIndexes.includes(index)));
+    } else {
+      // Добавляем все индексы из таблицы Others
+      setSelectedRows(prev => [...new Set([...prev, ...othersIndexes])]);
+    }
+    setSelectAll(!selectAll);
+  };
+
   useEffect(() => {
     if (!data) return;
   
@@ -55,7 +73,6 @@ Assistant of Juristic Person Manager`
         const deposit = parseFloat(row.deposit) || 0;
         const isPaid = (row.isPaid || "").trim().toUpperCase();
   
-        // Условие: депозит меньше суммы И НЕ оплачено
         if (deposit < total && isPaid !== "PAID") {
           return index;
         }
@@ -65,20 +82,7 @@ Assistant of Juristic Person Manager`
   
     setSelectedRows(rowsToSelect);
   }, [data]);
-  
-  
 
-  //чекбокс выбрать все
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(tableData.map((_, index) => index));
-    }
-    setSelectAll(!selectAll);
-  };
-
-  //скачать выбранные
   const downloadSelected = async () => {
     const selectedPdfUrls = selectedRows
       .map((i) => tableData[i].pdfUrl)
@@ -112,12 +116,10 @@ Assistant of Juristic Person Manager`
     }
   };
 
-  //отправить на почту
   const sendSelectedEmails = async () => {
     if (!selectedRows.length) return alert("Choose at least one invoice");
   
     for (const i of selectedRows) {
-      // Ставим статус "sending"
       setTableData(prev =>
         prev.map((row, index) =>
           index === i ? { ...row, emailStatus: "sending" } : row
@@ -137,11 +139,10 @@ Assistant of Juristic Person Manager`
         const res = await fetch(`${SERVER_URL}/send-emails`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rows: [rowToSend] }), // отправляем по одной строке
+          body: JSON.stringify({ rows: [rowToSend] }),
         });
         const result = await res.json();
   
-        // Обновляем статус после отправки
         const status = result.results[0]?.status || "error";
         setTableData(prev =>
           prev.map((row, index) =>
@@ -158,217 +159,237 @@ Assistant of Juristic Person Manager`
       }
     }
   };
-  
-console.log(tableData)
-return (
-  <div className="mt-4 flex flex-col h-[calc(100vh-100px)]">
-  {/* Кнопки */}
-    <div className="flex gap-3 items-center mb-3 flex-shrink-0">
-      <button onClick={downloadSelected} className="bg-blue-500 text-white px-4 py-2 rounded">
-        Download selected        
-      </button>
-      <button onClick={sendSelectedEmails} className="bg-green-500 text-white px-4 py-2 rounded">
-        Email selected
-      </button>
+
+  // Вспомогательная функция для получения оригинального индекса
+  const getOriginalIndex = (row, filteredData) => {
+    return tableData.findIndex(item => item === row);
+  };
+
+  return (
+    <div className="mt-4 flex flex-col h-[calc(100vh-100px)]">
+      <div className="flex gap-3 items-center mb-3 flex-shrink-0">
+        <button onClick={downloadSelected} className="bg-blue-500 text-white px-4 py-2 rounded">
+          Download selected        
+        </button>
+        <button onClick={sendSelectedEmails} className="bg-green-500 text-white px-4 py-2 rounded">
+          Email selected
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-auto space-y-6">
+        {/* Таблица 1 — с депозитом */}
+        {withDepositData.length > 0 && (
+          <div>
+            <h2 className="font-bold mb-2">With Deposit</h2>
+            <div className="overflow-auto border border-gray-300 rounded-lg">
+              <table className="w-full text-sm min-w-max">
+                <thead className="sticky top-0 z-10 bg-gray-100">
+                  <tr>
+                    <th className="border px-1 py-1 w-8">Room</th>
+                    <th className="border px-1 py-1 w-8">Name</th>
+                    <th className="border px-1 py-1 w-8">Email</th>
+                    <th className="border px-1 py-1 w-8">Phone</th>
+                    <th className="border px-1 py-1 w-8">Water</th>
+                    <th className="border px-1 py-1 w-8">Elec</th>
+                    <th className="border px-1 py-1 w-8">Total</th>
+                    <th className="border px-1 py-1 w-8">Deposit</th>
+                    <th className="border px-1 py-1 w-8">Payment</th>
+                    <th className="border px-1 py-1 w-8">PDF status</th>
+                    <th className="border px-1 py-1 w-8">Email status</th>
+                    <th className="border px-1 py-1 w-8">PDF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {withDepositData.map((row, localIndex) => {
+                    const originalIndex = getOriginalIndex(row, withDepositData);
+                    return (
+                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-200 cursor-pointer bg-green-200">
+                        <td className="border px-2 py-1 text-center">
+                          <input 
+                            type="checkbox" 
+                            checked={selectedRows.includes(originalIndex)} 
+                            onChange={() => {}} // Пустой обработчик, т.к. клик на строке
+                          />
+                        </td>
+                        <td className="border px-2 py-1">{row.room}</td>
+                        <td className="border px-2 py-1">{row.name}</td>
+                        <td className="border px-2 py-1">{row.email}</td>
+                        <td className="border px-2 py-1">
+                          {row.phone === 'no' ? 'No' : (
+                            <a
+                              href={`https://web.whatsapp.com/send?phone=${row.phone.replace(/\D/g, "")}&text=${encodeURIComponent(handleMessage(row))}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {row.phone}
+                            </a>
+                          )}
+                        </td>
+                        <td className="border px-2 py-1 text-right">{row.water_total}</td>
+                        <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
+                        <td className="border px-2 py-1 text-right">{row.amount_total}</td>
+                        <td className="border px-2 py-1 text-right bg-green-200">{row.deposit}</td>
+                        <td className="border px-2 py-1 text-right font-bold">{row.isPaid}</td>
+                        <td className={`border px-2 py-1 text-center font-bold ${row.status === "success" ? "bg-green-200" : "bg-red-100"}`}>
+                          {row.status === "success" ? "SUCCESS" : "ERROR"}
+                        </td>
+                        <td className={`border px-2 py-1 text-center font-bold ${row.emailStatus === "success" ? "bg-green-200" : row.emailStatus === "error" ? "text-red-600" : row.emailStatus === "sending" ? "bg-yellow-100" : "text-gray-400"}`}>
+                          {row.emailStatus === "success" ? "Send" : row.emailStatus === "error" ? "Error" : row.emailStatus === "sending" ? "Sending..." : "—"}
+                        </td>
+                        <td className="border px-2 py-1 text-center">
+                          {row.pdfUrl ? (
+                            <a href={`${SERVER_URL}${row.pdfUrl}`} target="_blank" rel="noreferrer" className="text-blue-500 underline" onClick={(e) => e.stopPropagation()}>
+                              Download
+                            </a>
+                          ) : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Таблица 2 — оплаченные */}
+        {paidData.length > 0 && (
+          <div>
+            <h2 className="font-bold mb-2">Paid</h2>
+            <div className="overflow-auto border border-gray-300 rounded-lg">
+              <table className="w-full text-sm min-w-max">
+                <thead className="sticky top-0 z-10 bg-gray-100">
+                  <tr>
+                    <th className="border px-1 py-1 w-8">Room</th>
+                    <th className="border px-1 py-1 w-8">Name</th>
+                    <th className="border px-1 py-1 w-8">Email</th>
+                    <th className="border px-1 py-1 w-8">Phone</th>
+                    <th className="border px-1 py-1 w-8">Water</th>
+                    <th className="border px-1 py-1 w-8">Elec</th>
+                    <th className="border px-1 py-1 w-8">Total</th>
+                    <th className="border px-1 py-1 w-8">Deposit</th>
+                    <th className="border px-1 py-1 w-8">Payment</th>
+                    <th className="border px-1 py-1 w-8">PDF status</th>
+                    <th className="border px-1 py-1 w-8">Email status</th>
+                    <th className="border px-1 py-1 w-8">PDF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paidData.map((row, localIndex) => {
+                    const originalIndex = getOriginalIndex(row, paidData);
+                    return (
+                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-200 cursor-pointer bg-green-200">
+                        <td className="border px-2 py-1 text-center">
+                          <input 
+                            type="checkbox" 
+                            checked={selectedRows.includes(originalIndex)} 
+                            onChange={() => {}}
+                          />
+                        </td>
+                        <td className="border px-2 py-1">{row.room}</td>
+                        <td className="border px-2 py-1">{row.name}</td>
+                        <td className="border px-2 py-1">{row.email}</td>
+                        <td className="border px-2 py-1">{row.phone}</td>
+                        <td className="border px-2 py-1 text-right">{row.water_total}</td>
+                        <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
+                        <td className="border px-2 py-1 text-right">{row.amount_total}</td>
+                        <td className="border px-2 py-1 text-right">{row.deposit}</td>
+                        <td className="border px-2 py-1 text-right font-bold">{row.isPaid}</td>
+                        <td className={`border px-2 py-1 text-center font-bold ${row.status === "success" ? "bg-green-200" : "bg-red-100"}`}>
+                          {row.status === "success" ? "SUCCESS" : "ERROR"}
+                        </td>
+                        <td className={`border px-2 py-1 text-center font-bold ${row.emailStatus === "success" ? "bg-green-200" : row.emailStatus === "error" ? "text-red-600" : row.emailStatus === "sending" ? "bg-yellow-100" : "text-gray-400"}`}>
+                          {row.emailStatus === "success" ? "Send" : row.emailStatus === "error" ? "Error" : row.emailStatus === "sending" ? "Sending..." : "—"}
+                        </td>
+                        <td className="border px-2 py-1 text-center">{row.pdfUrl ? (
+                          <a href={`${SERVER_URL}${row.pdfUrl}`} target="_blank" rel="noreferrer" className="text-blue-500 underline">
+                            Download
+                          </a>
+                        ) : "-"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Таблица 3 — остальные */}
+        {othersData.length > 0 && (
+          <div>
+            <h2 className="font-bold mb-2">Others</h2>
+            <div className="overflow-auto border border-gray-300 rounded-lg">
+              <table className="w-full text-sm min-w-max">
+                <thead className="sticky top-0 z-10 bg-gray-100">
+                  <tr>
+                    <th className="border px-1 py-1 text-center w-8">
+                      <input 
+                        type="checkbox" 
+                        checked={selectAll} 
+                        onChange={handleSelectAllOthers} 
+                        className="w-4 h-4" 
+                      />
+                    </th>
+                    <th className="border px-1 py-1 w-8">Room</th>
+                    <th className="border px-1 py-1 w-8">Name</th>
+                    <th className="border px-1 py-1 w-8">Email</th>
+                    <th className="border px-1 py-1 w-8">Phone</th>
+                    <th className="border px-1 py-1 w-8">Water</th>
+                    <th className="border px-1 py-1 w-8">Elec</th>
+                    <th className="border px-1 py-1 w-8">Total</th>
+                    <th className="border px-1 py-1 w-8">Deposit</th>
+                    <th className="border px-1 py-1 w-8">Payment</th>
+                    <th className="border px-1 py-1 w-8">PDF status</th>
+                    <th className="border px-1 py-1 w-8">Email status</th>
+                    <th className="border px-1 py-1 w-8">PDF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {othersData.map((row, localIndex) => {
+                    const originalIndex = getOriginalIndex(row, othersData);
+                    return (
+                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-200 cursor-pointer">
+                        <td className="border px-2 py-1 text-center">
+                          <input 
+                            type="checkbox" 
+                            checked={selectedRows.includes(originalIndex)} 
+                            onChange={() => {}}
+                          />
+                        </td>
+                        <td className="border px-2 py-1">{row.room}</td>
+                        <td className="border px-2 py-1">{row.name}</td>
+                        <td className="border px-2 py-1">{row.email}</td>
+                        <td className="border px-2 py-1">{row.phone}</td>
+                        <td className="border px-2 py-1 text-right">{row.water_total}</td>
+                        <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
+                        <td className="border px-2 py-1 text-right">{row.amount_total}</td>
+                        <td className="border px-2 py-1 text-right">{row.deposit}</td>
+                        <td className="border px-2 py-1 text-right font-bold">{row.isPaid}</td>
+                        <td className={`border px-2 py-1 text-center font-bold ${row.status === "success" ? "bg-green-200" : "bg-red-100"}`}>
+                          {row.status === "success" ? "SUCCESS" : "ERROR"}
+                        </td>
+                        <td className={`border px-2 py-1 text-center font-bold ${row.emailStatus === "success" ? "bg-green-200" : row.emailStatus === "error" ? "text-red-600" : row.emailStatus === "sending" ? "bg-yellow-100" : "text-gray-400"}`}>
+                          {row.emailStatus === "success" ? "Send" : row.emailStatus === "error" ? "Error" : row.emailStatus === "sending" ? "Sending..." : "—"}
+                        </td>
+                        <td className="border px-2 py-1 text-center">{row.pdfUrl ? (
+                          <a href={`${SERVER_URL}${row.pdfUrl}`} target="_blank" rel="noreferrer" className="text-blue-500 underline">
+                            Download
+                          </a>
+                        ) : "-"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-
-    {/* Контейнер с таблицами */}
-    <div className="flex-1 overflow-auto space-y-6">
-      {/* Таблица 1 — с депозитом */}
-      {tableData.filter(row => parseFloat(row.deposit) >= parseFloat(row.amount_total)).length > 0 && (
-        <div>
-          <h2 className="font-bold mb-2">With Deposit</h2>
-          <div className="overflow-auto border border-gray-300 rounded-lg">
-            <table className="w-full text-sm min-w-max">
-              <thead className="sticky top-0 z-10 bg-gray-100">
-                <tr>
-                  {/* <th className="border px-1 py-1 text-center w-8">
-                    <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4" />
-                  </th> */}
-                  <th className="border px-1 py-1 w-8">Room</th>
-                  <th className="border px-1 py-1 w-8">Name</th>
-                  <th className="border px-1 py-1 w-8">Email</th>
-                  <th className="border px-1 py-1 w-8">Phone</th>
-                  <th className="border px-1 py-1 w-8">Water</th>
-                  <th className="border px-1 py-1 w-8">Elec</th>
-                  <th className="border px-1 py-1 w-8">Total</th>
-                  <th className="border px-1 py-1 w-8">Deposit</th>
-                  <th className="border px-1 py-1 w-8">Payment</th>
-                  <th className="border px-1 py-1 w-8">PDF status</th>
-                  <th className="border px-1 py-1 w-8">Email status</th>
-                  <th className="border px-1 py-1 w-8">PDF</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tableData.filter(row => parseFloat(row.deposit) >= parseFloat(row.amount_total)).map((row, index) => (
-                  <tr key={index} onClick={() => handleCheckboxChange(index)} className="hover:bg-green-200 cursor-pointer bg-green-200">
-                    <td className="border px-2 py-1 text-center">
-                      <input type="checkbox" checked={selectedRows.includes(index)} />
-                    </td>
-                    <td className="border px-2 py-1">{row.room}</td>
-                    <td className="border px-2 py-1">{row.name}</td>
-                    <td className="border px-2 py-1">{row.email}</td>
-                    <td className="border px-2 py-1">
-                      {row.phone === 'no' ? 'No' : (
-                        <a
-                          href={`https://web.whatsapp.com/send?phone=${row.phone.replace(/\D/g, "")}&text=${encodeURIComponent(handleMessage(row))}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {row.phone}
-                        </a>
-                      )}
-                    </td>
-                    <td className="border px-2 py-1 text-right">{row.water_total}</td>
-                    <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
-                    <td className="border px-2 py-1 text-right">{row.amount_total}</td>
-                    <td className="border px-2 py-1 text-right bg-green-200">{row.deposit}</td>
-                    <td className="border px-2 py-1 text-right font-bold">{row.isPaid}</td>
-                    <td className={`border px-2 py-1 text-center font-bold ${row.status === "success" ? "bg-green-200" : "bg-red-100"}`}>
-                      {row.status === "success" ? "SUCCESS" : "ERROR"}
-                    </td>
-                    <td className={`border px-2 py-1 text-center font-bold ${row.emailStatus === "success" ? "bg-green-200" : row.emailStatus === "error" ? "text-red-600" : row.emailStatus === "sending" ? "bg-yellow-100" : "text-gray-400"}`}>
-                      {row.emailStatus === "success" ? "Send" : row.emailStatus === "error" ? "Error" : row.emailStatus === "sending" ? "Sending..." : "—"}
-                    </td>
-                    <td className="border px-2 py-1 text-center">
-                      {row.pdfUrl ? (
-                        <a href={`${SERVER_URL}${row.pdfUrl}`} target="_blank" rel="noreferrer" className="text-blue-500 underline" onClick={(e) => e.stopPropagation()}>
-                          Download
-                        </a>
-                      ) : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Таблица 2 — оплаченные */}
-      {tableData.filter(row => row.isPaid === 'PAID' && parseFloat(row.deposit) < parseFloat(row.amount_total)).length > 0 && (
-        <div>
-          <h2 className="font-bold mb-2">Paid</h2>
-          <div className="overflow-auto border border-gray-300 rounded-lg">
-            <table className="w-full text-sm min-w-max">
-              <thead className="sticky top-0 z-10 bg-gray-100">
-                <tr>
-                  {/* <th className="border px-1 py-1 text-center w-8">
-                    <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4" />
-                  </th> */}
-                  <th className="border px-1 py-1 w-8">Room</th>
-                  <th className="border px-1 py-1 w-8">Name</th>
-                  <th className="border px-1 py-1 w-8">Email</th>
-                  <th className="border px-1 py-1 w-8">Phone</th>
-                  <th className="border px-1 py-1 w-8">Water</th>
-                  <th className="border px-1 py-1 w-8">Elec</th>
-                  <th className="border px-1 py-1 w-8">Total</th>
-                  <th className="border px-1 py-1 w-8">Deposit</th>
-                  <th className="border px-1 py-1 w-8">Payment</th>
-                  <th className="border px-1 py-1 w-8">PDF status</th>
-                  <th className="border px-1 py-1 w-8">Email status</th>
-                  <th className="border px-1 py-1 w-8">PDF</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tableData.filter(row => row.isPaid === 'PAID' && parseFloat(row.deposit) < parseFloat(row.amount_total)).map((row, index) => (
-                  <tr key={index} onClick={() => handleCheckboxChange(index)} className="hover:bg-green-200 cursor-pointer bg-green-200 ">
-                    <td className="border px-2 py-1 text-center">
-                      <input type="checkbox" checked={selectedRows.includes(index)} />
-                    </td>
-                    <td className="border px-2 py-1">{row.room}</td>
-                    <td className="border px-2 py-1">{row.name}</td>
-                    <td className="border px-2 py-1">{row.email}</td>
-                    <td className="border px-2 py-1">{row.phone}</td>
-                    <td className="border px-2 py-1 text-right">{row.water_total}</td>
-                    <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
-                    <td className="border px-2 py-1 text-right">{row.amount_total}</td>
-                    <td className="border px-2 py-1 text-right">{row.deposit}</td>
-                    <td className="border px-2 py-1 text-right font-bold">{row.isPaid}</td>
-                    <td className={`border px-2 py-1 text-center font-bold ${row.status === "success" ? "bg-green-200" : "bg-red-100"}`}>
-                      {row.status === "success" ? "SUCCESS" : "ERROR"}
-                    </td>
-                    <td className={`border px-2 py-1 text-center font-bold ${row.emailStatus === "success" ? "bg-green-200" : row.emailStatus === "error" ? "text-red-600" : row.emailStatus === "sending" ? "bg-yellow-100" : "text-gray-400"}`}>
-                      {row.emailStatus === "success" ? "Send" : row.emailStatus === "error" ? "Error" : row.emailStatus === "sending" ? "Sending..." : "—"}
-                    </td>
-                    <td className="border px-2 py-1 text-center">{row.pdfUrl ? (
-                      <a href={`${SERVER_URL}${row.pdfUrl}`} target="_blank" rel="noreferrer" className="text-blue-500 underline">
-                        Download
-                      </a>
-                    ) : "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Таблица 3 — остальные */}
-      {tableData.filter(row => row.isPaid !== 'PAID' && parseFloat(row.deposit) < parseFloat(row.amount_total)).length > 0 && (
-        <div>
-          <h2 className="font-bold mb-2">Others</h2>
-          <div className="overflow-auto border border-gray-300 rounded-lg">
-            <table className="w-full text-sm min-w-max">
-              <thead className="sticky top-0 z-10 bg-gray-100">
-                <tr>
-                  <th className="border px-1 py-1 text-center w-8">
-                    <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4" />
-                  </th>
-                  <th className="border px-1 py-1 w-8">Room</th>
-                  <th className="border px-1 py-1 w-8">Name</th>
-                  <th className="border px-1 py-1 w-8">Email</th>
-                  <th className="border px-1 py-1 w-8">Phone</th>
-                  <th className="border px-1 py-1 w-8">Water</th>
-                  <th className="border px-1 py-1 w-8">Elec</th>
-                  <th className="border px-1 py-1 w-8">Total</th>
-                  <th className="border px-1 py-1 w-8">Deposit</th>
-                  <th className="border px-1 py-1 w-8">Payment</th>
-                  <th className="border px-1 py-1 w-8">PDF status</th>
-                  <th className="border px-1 py-1 w-8">Email status</th>
-                  <th className="border px-1 py-1 w-8">PDF</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tableData.filter(row => row.isPaid !== 'PAID' && parseFloat(row.deposit) < parseFloat(row.amount_total)).map((row, index) => (
-                  <tr key={index} onClick={() => handleCheckboxChange(index)} className="hover:bg-green-200 cursor-pointer">
-                    <td className="border px-2 py-1 text-center">
-                      <input type="checkbox" checked={selectedRows.includes(index)} />
-                    </td>
-                    <td className="border px-2 py-1">{row.room}</td>
-                    <td className="border px-2 py-1">{row.name}</td>
-                    <td className="border px-2 py-1">{row.email}</td>
-                    <td className="border px-2 py-1">{row.phone}</td>
-                    <td className="border px-2 py-1 text-right">{row.water_total}</td>
-                    <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
-                    <td className="border px-2 py-1 text-right">{row.amount_total}</td>
-                    <td className="border px-2 py-1 text-right">{row.deposit}</td>
-                    <td className="border px-2 py-1 text-right font-bold">{row.isPaid}</td>
-                    <td className={`border px-2 py-1 text-center font-bold ${row.status === "success" ? "bg-green-200" : "bg-red-100"}`}>
-                      {row.status === "success" ? "SUCCESS" : "ERROR"}
-                    </td>
-                    <td className={`border px-2 py-1 text-center font-bold ${row.emailStatus === "success" ? "bg-green-200" : row.emailStatus === "error" ? "text-red-600" : row.emailStatus === "sending" ? "bg-yellow-100" : "text-gray-400"}`}>
-                      {row.emailStatus === "success" ? "Send" : row.emailStatus === "error" ? "Error" : row.emailStatus === "sending" ? "Sending..." : "—"}
-                    </td>
-                    <td className="border px-2 py-1 text-center">{row.pdfUrl ? (
-                      <a href={`${SERVER_URL}${row.pdfUrl}`} target="_blank" rel="noreferrer" className="text-blue-500 underline">
-                        Download
-                      </a>
-                    ) : "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-    </div>
-  </div>
-);
-
+  );
 };
 
 export default ExcelHandler;
