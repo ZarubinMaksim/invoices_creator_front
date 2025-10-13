@@ -5,7 +5,9 @@ const SERVER_URL = "http://38.244.150.204:4000";
 
 const ExcelHandler = ({ data }) => {
   const [selectedRows, setSelectedRows] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
+  const [selectAllDeposit, setSelectAllDeposit] = useState(false);
+  const [selectAllPaid, setSelectAllPaid] = useState(false);
+  const [selectAllOthers, setSelectAllOthers] = useState(false);
   const [tableData, setTableData] = useState(data);
 
   // Фильтрованные данные для каждой таблицы
@@ -48,21 +50,74 @@ Assistant of Juristic Person Manager`
     );
   };
 
+  // Выбор всех в таблице "With Deposit"
+  const handleSelectAllDeposit = () => {
+    const depositIndexes = withDepositData.map(row => 
+      tableData.findIndex(item => item === row)
+    );
+    
+    if (selectAllDeposit) {
+      setSelectedRows(prev => prev.filter(index => !depositIndexes.includes(index)));
+    } else {
+      setSelectedRows(prev => [...new Set([...prev, ...depositIndexes])]);
+    }
+    setSelectAllDeposit(!selectAllDeposit);
+  };
+
+  // Выбор всех в таблице "Paid"
+  const handleSelectAllPaid = () => {
+    const paidIndexes = paidData.map(row => 
+      tableData.findIndex(item => item === row)
+    );
+    
+    if (selectAllPaid) {
+      setSelectedRows(prev => prev.filter(index => !paidIndexes.includes(index)));
+    } else {
+      setSelectedRows(prev => [...new Set([...prev, ...paidIndexes])]);
+    }
+    setSelectAllPaid(!selectAllPaid);
+  };
+
   // Выбор всех в таблице "Others"
   const handleSelectAllOthers = () => {
     const othersIndexes = othersData.map(row => 
       tableData.findIndex(item => item === row)
     );
     
-    if (selectAll) {
-      // Убираем только индексы из таблицы Others
+    if (selectAllOthers) {
       setSelectedRows(prev => prev.filter(index => !othersIndexes.includes(index)));
     } else {
-      // Добавляем все индексы из таблицы Others
       setSelectedRows(prev => [...new Set([...prev, ...othersIndexes])]);
     }
-    setSelectAll(!selectAll);
+    setSelectAllOthers(!selectAllOthers);
   };
+
+  // Синхронизация состояний "Выбрать все" при изменении selectedRows
+  useEffect(() => {
+    // Проверяем, все ли строки в таблице With Deposit выбраны
+    const depositIndexes = withDepositData.map(row => 
+      tableData.findIndex(item => item === row)
+    );
+    const allDepositSelected = depositIndexes.length > 0 && 
+      depositIndexes.every(index => selectedRows.includes(index));
+    setSelectAllDeposit(allDepositSelected);
+
+    // Проверяем, все ли строки в таблице Paid выбраны
+    const paidIndexes = paidData.map(row => 
+      tableData.findIndex(item => item === row)
+    );
+    const allPaidSelected = paidIndexes.length > 0 && 
+      paidIndexes.every(index => selectedRows.includes(index));
+    setSelectAllPaid(allPaidSelected);
+
+    // Проверяем, все ли строки в таблице Others выбраны
+    const othersIndexes = othersData.map(row => 
+      tableData.findIndex(item => item === row)
+    );
+    const allOthersSelected = othersIndexes.length > 0 && 
+      othersIndexes.every(index => selectedRows.includes(index));
+    setSelectAllOthers(allOthersSelected);
+  }, [selectedRows, tableData, withDepositData, paidData, othersData]);
 
   useEffect(() => {
     if (!data) return;
@@ -185,6 +240,14 @@ Assistant of Juristic Person Manager`
               <table className="w-full text-sm min-w-max">
                 <thead className="sticky top-0 z-10 bg-gray-100">
                   <tr>
+                    <th className="border px-1 py-1 text-center w-8">
+                      <input 
+                        type="checkbox" 
+                        checked={selectAllDeposit} 
+                        onChange={handleSelectAllDeposit} 
+                        className="w-4 h-4" 
+                      />
+                    </th>
                     <th className="border px-1 py-1 w-8">Room</th>
                     <th className="border px-1 py-1 w-8">Name</th>
                     <th className="border px-1 py-1 w-8">Email</th>
@@ -203,7 +266,7 @@ Assistant of Juristic Person Manager`
                   {withDepositData.map((row, localIndex) => {
                     const originalIndex = getOriginalIndex(row, withDepositData);
                     return (
-                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-200 cursor-pointer bg-green-200">
+                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-100 cursor-pointer">
                         <td className="border px-2 py-1 text-center">
                           <input 
                             type="checkbox" 
@@ -262,6 +325,14 @@ Assistant of Juristic Person Manager`
               <table className="w-full text-sm min-w-max">
                 <thead className="sticky top-0 z-10 bg-gray-100">
                   <tr>
+                    <th className="border px-1 py-1 text-center w-8">
+                      <input 
+                        type="checkbox" 
+                        checked={selectAllPaid} 
+                        onChange={handleSelectAllPaid} 
+                        className="w-4 h-4" 
+                      />
+                    </th>
                     <th className="border px-1 py-1 w-8">Room</th>
                     <th className="border px-1 py-1 w-8">Name</th>
                     <th className="border px-1 py-1 w-8">Email</th>
@@ -280,7 +351,7 @@ Assistant of Juristic Person Manager`
                   {paidData.map((row, localIndex) => {
                     const originalIndex = getOriginalIndex(row, paidData);
                     return (
-                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-200 cursor-pointer bg-green-200">
+                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-100 cursor-pointer">
                         <td className="border px-2 py-1 text-center">
                           <input 
                             type="checkbox" 
@@ -328,7 +399,7 @@ Assistant of Juristic Person Manager`
                     <th className="border px-1 py-1 text-center w-8">
                       <input 
                         type="checkbox" 
-                        checked={selectAll} 
+                        checked={selectAllOthers} 
                         onChange={handleSelectAllOthers} 
                         className="w-4 h-4" 
                       />
@@ -351,7 +422,7 @@ Assistant of Juristic Person Manager`
                   {othersData.map((row, localIndex) => {
                     const originalIndex = getOriginalIndex(row, othersData);
                     return (
-                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-200 cursor-pointer">
+                      <tr key={originalIndex} onClick={() => handleCheckboxChange(originalIndex)} className="hover:bg-green-200 cursor-pointer hover:bg-green-100">
                         <td className="border px-2 py-1 text-center">
                           <input 
                             type="checkbox" 
