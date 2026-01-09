@@ -1,4 +1,5 @@
 import React from "react";
+import FolderList from "./FolderList";
 import UploadFile from "./UploadFile";
 
 function App() {
@@ -9,7 +10,8 @@ function App() {
 //получить доступ к паролю почты
 
   return (
-    <div className="h-screen flex justify-center items-center">
+    <div className="h-screen flex flex-col justify-center items-center">
+      <FolderList />
       <UploadFile />
     </div>
   );
