@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
 
 const SERVER_URL = "http://38.244.150.204:4000";
+// const SERVER_URL = "http://localhost:3000";
 
 const ExcelHandler = ({ data }) => {
   const [selectedRows, setSelectedRows] = useState([]);
