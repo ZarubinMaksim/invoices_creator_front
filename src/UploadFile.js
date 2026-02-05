@@ -65,7 +65,7 @@ const UploadFile = () => {
     <>
       {!isUploadClicked ? (
         // Блок с инпутом
-        <div className="flex flex-col w-3/5 p-5 gap-5 items-center">
+        <div className="flex flex-col w-3/5 p-5 gap-5 items-center border-b border-gray-200">
           <div className="flex items-center gap-3 p-2 rounded-full bg-gray-100 shadow-inner w-full">
             {/* Скрытый input */}
             <input

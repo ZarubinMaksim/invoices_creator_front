@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Copy } from "lucide-react";
 
 const SERVER_URL = "http://38.244.150.204:4000";
 // const SERVER_URL = "http://localhost:3000";
@@ -222,7 +221,7 @@ Assistant of Juristic Person Manager`
   };
 
   return (
-    <div className="mt-4 flex flex-col h-[calc(100vh-100px)]">
+    <div className="mt-4 flex flex-col">
       <div className="flex gap-3 items-center mb-3 flex-shrink-0">
         <button onClick={downloadSelected} className="bg-blue-500 text-white px-4 py-2 rounded">
           Download selected        
@@ -363,7 +362,19 @@ Assistant of Juristic Person Manager`
                         <td className="border px-2 py-1">{row.room}</td>
                         <td className="border px-2 py-1">{row.name}</td>
                         <td className="border px-2 py-1">{row.email}</td>
-                        <td className="border px-2 py-1">{row.phone}</td>
+                        <td className="border px-2 py-1">
+                          {row.phone === 'no' ? 'No' : (
+                            <a
+                              href={`https://web.whatsapp.com/send?phone=${row.phone.replace(/\D/g, "")}&text=${encodeURIComponent(handleMessage(row))}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {row.phone}
+                            </a>
+                          )}
+                        </td>
                         <td className="border px-2 py-1 text-right">{row.water_total}</td>
                         <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
                         <td className="border px-2 py-1 text-right">{row.amount_total}</td>
@@ -434,7 +445,19 @@ Assistant of Juristic Person Manager`
                         <td className="border px-2 py-1">{row.room}</td>
                         <td className="border px-2 py-1">{row.name}</td>
                         <td className="border px-2 py-1">{row.email}</td>
-                        <td className="border px-2 py-1">{row.phone}</td>
+                        <td className="border px-2 py-1">
+  {!row.phone || row.phone === 'no' || typeof row.phone !== 'string' ? 'No' : (
+    <a
+      href={`https://web.whatsapp.com/send?phone=${row.phone.replace(/\D/g, "")}&text=${encodeURIComponent(handleMessage(row))}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:underline"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {row.phone}
+    </a>
+  )}
+</td>
                         <td className="border px-2 py-1 text-right">{row.water_total}</td>
                         <td className="border px-2 py-1 text-right">{row.electricity_total}</td>
                         <td className="border px-2 py-1 text-right">{row.amount_total}</td>
