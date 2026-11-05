@@ -52,7 +52,7 @@ const InvoiceGeneratorForm = () => {
       const end = parseFloat(updatedData.electricity_end) || 0;
       if (end >= start) {
         updatedData.electricity_consumption = (end - start).toFixed(2);
-        updatedData.electricity_total = ((end - start) * 8).toFixed(2);
+        updatedData.electricity_total = ((end - start) * 6.5).toFixed(2);
       } else {
         updatedData.electricity_consumption = '0.00';
         updatedData.electricity_total = '0.00';
@@ -374,7 +374,7 @@ const InvoiceGeneratorForm = () => {
       readOnly
       className="px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
     />
-    <span className="text-xs text-gray-500 mt-1">Price: 8 THB/unit</span>
+    <span className="text-xs text-gray-500 mt-1">Price: 6.5 THB/unit</span>
   </div>
 
 
