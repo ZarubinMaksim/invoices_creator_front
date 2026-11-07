@@ -13,7 +13,7 @@ function App() {
   return (
     <div className="h-auto flex flex-col justify-center items-center gap-10 pt-40 pb-20">
       <UploadFile />
-      <FolderList />
+      {/* <FolderList /> */}
       <InvoiceGeneratorForm />
     </div>
   );
